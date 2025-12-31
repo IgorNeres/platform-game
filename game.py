@@ -17,6 +17,21 @@ GAME_WIN = "win"
 game_state = GAME_MENU
 sound_on = True
 
+# MUSICA
+current_music = None
+def play_music(name):
+    global current_music
+    if not sound_on:
+        music.stop()
+        current_music = None
+        return
+
+    if current_music != name:
+        music.stop()
+        music.play(name)
+        current_music = name
+
+
 # BOTOES
 retry_button = Rect((WIDTH//2 - 100, HEIGHT//2 + 50), (200, 50))
 menu_back = Rect((WIDTH//2 - 100, HEIGHT//2 + 50), (200, 50))
@@ -43,7 +58,7 @@ class SpriteAnimation:
         return self.frames[self.index]
 
 
-#HEROI
+# HEROI
 class Hero:
     def __init__(self, pos):
         self.actor = Actor("hero_idle_0", pos)
@@ -115,7 +130,7 @@ class Hero:
 
 
 
-#iNIMIGOS
+# INIMIGOS
 class Enemy:
     def __init__(self, left_limit, right_limit, y):
         self.left_limit = left_limit
@@ -179,31 +194,31 @@ class FlyingEnemy:
 
 
 
-#ENTIDADES
+# ENTIDADES
 hero = Hero((100, 300))
 
 platforms = [
-    {"rect": Rect((30, 400), (730, 20)), "sprite": "platform_0"}, #CHÃO
-    {"rect": Rect((220, 320), (170, 20)), "sprite": "platform_1"}, #PLAT1
-    {"rect": Rect((450, 250), (150, 20)), "sprite": "platform_1"}, #PLAT2 (BAU)
-    {"rect": Rect((190, 180), (200, 20)), "sprite": "platform_1"}, #PLAT3
-    {"rect": Rect((20, 110), (120, 20)), "sprite": "platform_1"}, #PLAT 4 (CHAVE)
+    {"rect": Rect((30, 400), (730, 20)), "sprite": "platform_0"}, # CHÃO
+    {"rect": Rect((220, 320), (170, 20)), "sprite": "platform_1"}, # PLAT1
+    {"rect": Rect((450, 250), (150, 20)), "sprite": "platform_1"}, # PLAT2 (BAU)
+    {"rect": Rect((190, 180), (200, 20)), "sprite": "platform_1"}, # PLAT3
+    {"rect": Rect((20, 110), (120, 20)), "sprite": "platform_1"}, # PLAT 4 (CHAVE)
 ]
 
 enemies = [
-    Enemy(180, 700, 390), #NO CHÃO
-    Enemy(200, 380, 170) #NA PLAT 3
+    Enemy(180, 700, 390), # NO CHÃO
+    Enemy(200, 380, 170) # NA PLAT 3
 ]
 
 flying_enemies = [
-    FlyingEnemy(420, 100, 250), #ENTRE PLAT1 E 2
-    FlyingEnemy(170, 60, 170) #ENTRE PLAT3 E 4
+    FlyingEnemy(420, 100, 250), # ENTRE PLAT1 E 2
+    FlyingEnemy(170, 60, 170) # ENTRE PLAT3 E 4
 ]
 
 spikes = [
-    Actor("spike", (270, 310)), #NA PLAT1
-    Actor("spike", (350, 310)), #NA PLAT1
-    Actor("spike", (100, 100)) #NA PLAT4
+    Actor("spike", (270, 310)), # NA PLAT1
+    Actor("spike", (350, 310)), # NA PLAT1
+    Actor("spike", (100, 100)) # NA PLAT4
 ]
 
 key = Actor("key", (40, 100))
@@ -217,7 +232,7 @@ buttons = {
 
 
 
-#RENDERIZAR
+# RENDERIZAR
 def draw_platform(platform):
     sprite_name = platform["sprite"]
     rect = platform["rect"]
@@ -249,6 +264,7 @@ def draw():
         screen.draw.text("Som: on", center=sound_button.center, fontsize=30)
     else:
         screen.draw.text("Som: off", center=sound_button.center, fontsize=30)
+
 
 
 def draw_menu():
@@ -292,57 +308,78 @@ def draw_center_text(text, color):
 
 
 
-#UPDATES
+# UPDATES
 def update():
-    global game_state, key_collected
+    global game_state, key_collected, current_music  # Adicionado current_music aqui
 
-    if game_state != GAME_PLAYING:
-        return
+    if game_state == GAME_MENU:
+        play_music("menu_music")
+        return  # Retorna aqui para não executar o resto do update no menu
 
-    hero.update(platforms)
-
-    if hero.actor.y > HEIGHT:
-        if sound_on: sounds.defeat.play()
-        game_state = GAME_GAME_OVER
-
-    for enemy in enemies:
-        enemy.update(hero)
-        if hero.spawn_protection == 0 and hero.actor.colliderect(enemy.actor):
+    elif game_state == GAME_PLAYING:
+        # Apenas toca música do jogo se não estiver tocando
+        if current_music != "game_music" and sound_on:
+            play_music("game_music")
+        
+        # Resto da lógica do jogo...
+        hero.update(platforms)
+        
+        if hero.actor.y > HEIGHT:
             if sound_on: sounds.defeat.play()
             game_state = GAME_GAME_OVER
 
-    for fe in flying_enemies:
-        fe.update()
-        if hero.spawn_protection == 0 and hero.actor.colliderect(fe.actor):
-            if sound_on: sounds.defeat.play()
-            game_state = GAME_GAME_OVER
+        for enemy in enemies:
+            enemy.update(hero)
+            if hero.spawn_protection == 0 and hero.actor.colliderect(enemy.actor):
+                if sound_on: sounds.defeat.play()
+                game_state = GAME_GAME_OVER
 
-    for spike in spikes:
-        if hero.actor.colliderect(spike):
-            if sound_on: sounds.defeat.play()
-            game_state = GAME_GAME_OVER
+        for fe in flying_enemies:
+            fe.update()
+            if hero.spawn_protection == 0 and hero.actor.colliderect(fe.actor):
+                if sound_on: sounds.defeat.play()
+                game_state = GAME_GAME_OVER
 
-    if not key_collected and hero.actor.colliderect(key):
-        if sound_on: sounds.key.play()
-        key_collected = True
-        hero.has_key = True
+        for spike in spikes:
+            if hero.actor.colliderect(spike):
+                if sound_on: sounds.defeat.play()
+                game_state = GAME_GAME_OVER
 
-    if hero.has_key and hero.actor.colliderect(chest):
-        if sound_on: sounds.chest.play()
-        game_state = GAME_WIN
+        if not key_collected and hero.actor.colliderect(key):
+            if sound_on: sounds.key.play()
+            key_collected = True
+            hero.has_key = True
+
+        if hero.has_key and hero.actor.colliderect(chest):
+            if sound_on: sounds.chest.play()
+            if sound_on: sounds.win.play()
+            game_state = GAME_WIN
+        
+    elif game_state == GAME_GAME_OVER or game_state == GAME_WIN:
+        # Para a música nas telas de fim
+        if current_music is not None:
+            music.stop()
+            current_music = None
 
 
-#INPUTS
+# INPUTS
 def on_key_down(key):
     if game_state == GAME_PLAYING and key == keys.SPACE:
         hero.jump()
 
 
 def on_mouse_down(pos):
-    global game_state, sound_on
-    # Botão de som
+    global game_state, sound_on, current_music
+    
     if sound_button.collidepoint(pos):
         sound_on = not sound_on
+        if not sound_on:
+            music.stop()
+            current_music = None
+        else:
+            # Se ligou o som e está no menu, toca música do menu
+            if game_state == GAME_MENU:
+                play_music("menu_music")
         return
 
     if game_state == GAME_MENU:
@@ -362,9 +399,9 @@ def on_mouse_down(pos):
             game_state = GAME_MENU
 
 
-#RESTAR
+# RESTART
 def restart_game():
-    global game_state, key_collected
+    global game_state, key_collected, current_music
 
     hero.actor.pos = (100, 300)
     hero.velocity_y = 0
@@ -386,3 +423,8 @@ def restart_game():
         fe.direction = 1
 
     game_state = GAME_PLAYING
+    # Força a música do jogo a tocar
+    if sound_on:
+        music.stop()
+        music.play("game_music")
+        current_music = "game_music"
