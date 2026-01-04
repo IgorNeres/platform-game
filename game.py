@@ -139,7 +139,7 @@ class Enemy:
         start_x = (left_limit + right_limit) // 2
         self.actor = Actor("enemy_idle_1", (start_x, y))
 
-        self.speed = random.choice([-2, 2])
+        self.speed = random.choice([-1, 1])
         self.active = False
 
         self.idle_animation = SpriteAnimation(["enemy_idle_1", "enemy_idle_0"], 150)
@@ -310,18 +310,16 @@ def draw_center_text(text, color):
 
 # UPDATES
 def update():
-    global game_state, key_collected, current_music  # Adicionado current_music aqui
+    global game_state, key_collected, current_music
 
     if game_state == GAME_MENU:
         play_music("menu_music")
-        return  # Retorna aqui para não executar o resto do update no menu
+        return
 
     elif game_state == GAME_PLAYING:
-        # Apenas toca música do jogo se não estiver tocando
         if current_music != "game_music" and sound_on:
             play_music("game_music")
         
-        # Resto da lógica do jogo...
         hero.update(platforms)
         
         if hero.actor.y > HEIGHT:
@@ -356,7 +354,6 @@ def update():
             game_state = GAME_WIN
         
     elif game_state == GAME_GAME_OVER or game_state == GAME_WIN:
-        # Para a música nas telas de fim
         if current_music is not None:
             music.stop()
             current_music = None
@@ -377,7 +374,6 @@ def on_mouse_down(pos):
             music.stop()
             current_music = None
         else:
-            # Se ligou o som e está no menu, toca música do menu
             if game_state == GAME_MENU:
                 play_music("menu_music")
         return
@@ -385,6 +381,7 @@ def on_mouse_down(pos):
     if game_state == GAME_MENU:
         if buttons["Iniciar"].collidepoint(pos):
             if sound_on: sounds.start.play()
+            restart_game()
             game_state = GAME_PLAYING
         elif buttons["Sair"].collidepoint(pos):
             if sound_on: sounds.click.play()
@@ -423,7 +420,6 @@ def restart_game():
         fe.direction = 1
 
     game_state = GAME_PLAYING
-    # Força a música do jogo a tocar
     if sound_on:
         music.stop()
         music.play("game_music")
