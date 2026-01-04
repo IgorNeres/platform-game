@@ -170,7 +170,6 @@ pip install pygame==2.5.0
 ## 🧪 Observações técnicas
 
 - O projeto utiliza classes próprias para personagens e animações
-- As animações são feitas com múltiplos frames, não apenas troca de sprite
 - O código segue boas práticas de organização e legibilidade
 - Nenhum trecho foi copiado de terceiros
 
